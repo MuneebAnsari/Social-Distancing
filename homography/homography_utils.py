@@ -129,4 +129,62 @@ def find_close(pts, threshold=1, verbose=True):
             indices.append(i)
     
     return indices
+
+def get_rotational_matrix(angs):
+    '''
+    Obtain the 3x3 3D rotational matrix given by euler angles angs. 
+    Equation taken from https://en.wikipedia.org/wiki/Rotation_formalisms_in_three_dimensions
     
+    Params
+    _________
+    angs: The three euler angles. 
+    '''
+    # Obtain three rotations 
+    ax, ay, az = angs[0], angs[1], angs[2]
+    Rx = np.array([
+        [1, 0, 0],
+        [0, np.cos(ax), -np.sin(ax)],
+        [0, np.sin(ax), np.cos(ax)] 
+    ])
+    Ry = np.array([
+        [np.cos(ay), 0, np.sin(ay)],
+        [0, 1, 0],
+        [-np.sin(ay), 0, np.cos(ay)] 
+    ])
+    Rz = np.array([
+        [np.cos(az), -np.sin(az), 0],
+        [-np.sin(az), np.cos(az), 0],
+        [0, 0, 1] 
+    ])
+    # Do rotation in order
+    return Rz @ Ry @ Rx 
+
+def get_homography(f, px, py, angs, ts):
+    '''
+    Obtain the homography specified by these parameters 
+    
+    Params
+    _________
+    f, px, py: scalars. 
+        Lens ratio & displacements for x or y
+    angs/ts: vectors with three elements. 
+        The euler angles and translation vector of camera 
+    '''
+
+    # The intrinsic matrix 
+    K = np.array([
+        [f, 0, px],
+        [0, f, py],
+        [0, 0, 1], 
+    ])
+
+    # The rotation matrix.
+    R = get_rotational_matrix(angs)
+    R = R[:, :2]
+
+    # The displacement vector
+    ts = np.reshape(ts, (3, 1))
+
+    # The extrinsic matrix
+    E = np.concatenate([R, ts], axis=1)
+    return K @ E
