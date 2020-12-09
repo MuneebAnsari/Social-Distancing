@@ -188,3 +188,33 @@ def get_homography(f, px, py, angs, ts):
     # The extrinsic matrix
     E = np.concatenate([R, ts], axis=1)
     return K @ E
+
+def get_sap_homography(s, r_ang, t, k_diag, k_off, v):
+    '''
+    Return the homography transformation as the product of HS HA HP matrix 
+    specified below 
+    HS: [   [sR(r_ang), t12]
+            [0^T 1]   ]
+    HA: [   [K 0]
+            [0 1] ]
+    HP: [   [I 0]
+            [v12 1] ]
+    '''
+
+    HS = np.array([
+        [s*np.cos(r_ang), -s*np.sin(r_ang), t[0]],
+        [s*np.sin(r_ang), s*np.cos(r_ang), t[1]],
+        [0, 0, 1]
+    ]) # 4 dof 
+    HA = np.array([
+        [k_diag, k_off, 0],
+        [0, k_diag**(-1), 0],
+        [0, 0, 1]
+    ]) # 2 dof
+    HP = np.array([
+        [1, 0, 0],
+        [0, 1, 0],
+        [v[0], v[1], 1]
+    ])
+
+    return HS @ HA @ HP

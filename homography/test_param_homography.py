@@ -1,8 +1,8 @@
 import numpy as np 
 from scipy import optimize
-from homography_utils import get_homography, compute_homography
+from homography_utils import get_homography, compute_homography, get_sap_homography
 
-def cost(x, M):
+def cost(x, M, sap=False):
     '''
     Build homography M' based on parameters in x. 
     Return the L2 norm of (M - M') as cost 
@@ -14,8 +14,13 @@ def cost(x, M):
         But it's too complex to figure the angles that's overparametrized. 
     M: The homography matrix 
     '''
-    # Obtain the difference 
-    Mp = get_homography(x[0], x[1], x[2], x[3:6], x[6:]) 
+    # Obtain the difference
+
+    if sap:
+        Mp = get_sap_homography(x[0], x[1], x[2:4], x[4], x[5], x[6:])
+    else: 
+        Mp = get_homography(x[0], x[1], x[2], x[3:6], x[6:]) 
+    Mp = Mp / np.sum(Mp * Mp)**(1/2) # Choose norm of Mp
     diff = M - Mp
     
     # Compute cost 
@@ -23,7 +28,7 @@ def cost(x, M):
     return l2 
 
 ### Parameters
-tol = 1e-8
+tol = 1e-10
 
 ### Testing method, random run 
 M = get_homography(1, 0, 0, np.random.rand(3), np.random.rand(3))
@@ -44,10 +49,20 @@ dst_pts = np.array([
 ])
 M = compute_homography(src_pts.T, dst_pts.T)
 
-### Minimization 
+##### Minimization 
+### Lecture form of M
 x0 = np.random.rand(9) 
-fun = lambda x: cost(x, M)
+fun = lambda x: cost(x, M, sap=False)
 sol = optimize.minimize(fun, x0, tol=tol)
 
-print("Converged Solution: {}".format(sol.x))
-print("Converged L2 norm: {}".format(sol.fun))
+print("Converged Solution. Lecture form: {}".format(sol.x))
+print("Converged L2 norm. Lecture form: {}".format(sol.fun))
+
+### SAP form of M
+fun = lambda x: cost(x, M, sap=True)
+sol = optimize.minimize(fun, x0, tol=tol)
+print("Converged Solution. SAP form: {}".format(sol.x))
+print("Converged L2 norm. SAP form: {}".format(sol.fun))
+
+# TODO: Check SAP form is correct
+# TODO: Code random initialization optimization
