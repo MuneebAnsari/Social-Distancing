@@ -9,7 +9,7 @@ def cost(x, M, sap=False):
 
     Params
     _________
-    x: length of 9 vectors. f, px, py, angles, translations 
+    x: parameters of the homography matrix. f, px, py, angles, translations 
         This is currently overparameterized because H has only 8 degree of freedom. 
         But it's too complex to figure the angles that's overparametrized. 
     M: The homography matrix 
@@ -27,13 +27,42 @@ def cost(x, M, sap=False):
     l2 = np.sum(diff * diff) ** (1/2)
     return l2 
 
+def test_parametrization(M, sap, attempts=100, tol=1e-6, suc_tol=1e-4):
+    '''
+    Do multiple attempts to parametrize M with two parametrization
+
+    Params
+    _________
+    M: The homography matrix to be parametrized
+    sap: Whether to use the SAP decomposition or the 3x4 -> 3x3 parametrization from lecture 
+    attempts: number of tries
+
+    Returns
+    _________
+    rate: The success rate of the parametrization 
+    ''' 
+    success = 0
+    for i in range(attempts):
+        if sap:
+            x0 = np.random.rand(8) 
+            fun = lambda x: cost(x, M, sap=True)
+        else:
+            x0 = np.random.rand(9) 
+            fun = lambda x: cost(x, M, sap=False)
+        sol = optimize.minimize(fun, x0, tol=tol)
+        if sol.fun < suc_tol:
+            success += 1
+    return success / attempts
+
 ### Parameters
-tol = 1e-10
+tol = 1e-12
+attempts = 10 
 
 ### Testing method, random run 
 M = get_homography(1, 0, 0, np.random.rand(3), np.random.rand(3))
 
 ### Testing whether M can be parametrized 
+# Here I used the actual points picked from an image
 src_pts = np.array([
     [200, 1020], 
     [1884, 1050],
@@ -65,5 +94,5 @@ sol = optimize.minimize(fun, x0, tol=tol)
 print("Converged Solution. SAP form: {}".format(sol.x))
 print("Converged L2 norm. SAP form: {}".format(sol.fun))
 
-# TODO: Check SAP form is correct
-# TODO: Code random initialization optimization
+print("Percentage of success parametrization using lecture form: {}".format(test_parametrization(M, sap=False, tol=tol, attempts=attempts)))
+print("Percentage of success parametrization using lecture form: {}".format(test_parametrization(M, sap=True, tol=tol, attempts=attempts)))
