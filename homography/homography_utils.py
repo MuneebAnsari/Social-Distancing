@@ -89,7 +89,7 @@ def homography_trsf(pts, M):
     pts: 2xN matrix representing transformed points
     '''
     N = pts.shape[1]
-    homogeneous_coord = np.concatenate([pts, np.ones(1, N)], axis=0)
+    homogeneous_coord = np.concatenate([pts, np.ones((1, N))], axis=0)
     world_coord = M @ homogeneous_coord
     world_coord = world_coord / world_coord[2, :]
     return world_coord[:2, :]
@@ -199,6 +199,11 @@ def get_sap_homography(s, r_ang, t, k_diag, k_off, v):
             [0 1] ]
     HP: [   [I 0]
             [v12 1] ]
+    
+    Params
+    _________
+    s, r_ang, k_diag, k_off: scalars. 
+    angs/ts: vectors with two elements. 
     '''
 
     HS = np.array([
@@ -218,3 +223,81 @@ def get_sap_homography(s, r_ang, t, k_diag, k_off, v):
     ])
 
     return HS @ HA @ HP
+
+def box2pt(boxes):
+    '''
+    Transform the bounding boxes to bottom center point 
+    
+    Params
+    _________
+    boxes: list of bounding boxes (topleft, bottomright).
+
+    Returns
+    _________
+    coords: list of coordinates at bottom center 
+    '''
+
+    coords = []
+    for box in boxes:
+        tl = box[0]
+        br = box[1]
+        x = int((tl[0] + br[0]) / 2)
+        y = br[1]
+        coords.append([x, y])
+    return coords
+
+def color_pts(img, coords, color=[0, 255, 0], width=5):
+    '''
+    Color img of coords to color 
+
+    Params
+    _________
+    imgs: n x m x 3 image 
+    coords: list of coordinates (x, y).
+    color: size 3 color channel
+
+    Returns
+    _________
+    imgs: n x m x 3 image 
+    '''
+    for crd in coords:
+        img[crd[1]-width:crd[1]+width, crd[0]-width:crd[0]+width] = color
+    return img
+
+def color_boxes(img, boxes, color=[0, 255, 0]):
+    '''
+    Color img of coords to color 
+
+    Params
+    _________
+    imgs: n x m x 3 image 
+    boxes: list of bounding boxes (topleft, bottomright).
+    color: size 3 color channel
+
+    Returns
+    _________
+    imgs: n x m x 3 image 
+    '''
+    for box in boxes:
+        cv2.rectangle(img, box[0], box[1], color, 3)
+    return img
+
+def detect_close(boxes, H, threshold=2):
+    '''
+    Detect bounding boxes that are too close
+
+    Params
+    _________
+    boxes: list of bounding boxes (topleft, bottomright).
+    H: 3x3 homography transformation
+    threshold: scalar social distance
+
+    Returns
+    _________
+    cls_idx: the list of indices with bounding boxes to close to each other 
+    '''
+    pts = box2pt(boxes)
+    pts = homography_trsf(pts, H)
+    cls_idx = find_close(pts, threshold=threshold, verbose=False)
+    
+    return cls_idx
