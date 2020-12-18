@@ -59,6 +59,7 @@ print("Converged Solution. Lecture form: {}".format(sol.x))
 print("Converged L2 norm. Lecture form: {}".format(sol.fun))
 
 ### SAP form of M
+x0 = np.random.rand(8) 
 fun = lambda x: cost(x, M, sap=True)
 sol = optimize.minimize(fun, x0, tol=tol)
 print("Converged Solution. SAP form: {}".format(sol.x))
