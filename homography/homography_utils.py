@@ -94,7 +94,7 @@ def homography_trsf(pts, M):
     world_coord = world_coord / world_coord[2, :]
     return world_coord[:2, :]
 
-def find_close(pts, threshold=1, verbose=True):
+def find_close(pts, threshold=1, verbose=True, idx_stay_away=[]):
     '''
     Find the set of index that are too close to other points. 
 
@@ -125,7 +125,11 @@ def find_close(pts, threshold=1, verbose=True):
     
     # Collecting close indices 
     for i in range(N):
-        if any(dists[i, :] < threshold):
+        if i in idx_stay_away:
+            cur_threshold = 2*threshold
+        else:
+            cur_threshold = threshold
+        if any(dists[i, :] < cur_threshold):
             indices.append(i)
     
     return indices
