@@ -57,6 +57,7 @@ def test_parametrization(M, sap, attempts=100, tol=1e-6, suc_tol=1e-4):
 ### Parameters
 tol = 1e-12
 attempts = 10 
+suc_tol = 1e-4 
 
 ### Testing method, random run 
 M = get_homography(1, 0, 0, np.random.rand(3), np.random.rand(3))
@@ -84,15 +85,15 @@ x0 = np.random.rand(9)
 fun = lambda x: cost(x, M, sap=False)
 sol = optimize.minimize(fun, x0, tol=tol)
 
-print("Converged Solution. Lecture form: {}".format(sol.x))
+#print("Converged Solution. Lecture form: {}".format(sol.x))
 print("Converged L2 norm. Lecture form: {}".format(sol.fun))
 
 ### SAP form of M
 x0 = np.random.rand(8) 
 fun = lambda x: cost(x, M, sap=True)
 sol = optimize.minimize(fun, x0, tol=tol)
-print("Converged Solution. SAP form: {}".format(sol.x))
+#print("Converged Solution. SAP form: {}".format(sol.x))
 print("Converged L2 norm. SAP form: {}".format(sol.fun))
 
 print("Percentage of success parametrization using lecture form: {}".format(test_parametrization(M, sap=False, tol=tol, attempts=attempts)))
-print("Percentage of success parametrization using lecture form: {}".format(test_parametrization(M, sap=True, tol=tol, attempts=attempts)))
+print("Percentage of success parametrization using SAP form: {}".format(test_parametrization(M, sap=True, tol=tol, attempts=attempts)))
